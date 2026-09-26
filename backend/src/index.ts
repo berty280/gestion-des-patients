@@ -2,6 +2,7 @@ import { config } from './config.js';
 import { buildServer } from './server.js';
 import { runMigrations } from './db/migrate.js';
 import { closeDb } from './db/connection.js';
+import { startBackupScheduler } from './services/backup.js';
 
 async function main(): Promise<void> {
   // Apply any pending migrations on boot so the API never runs against a stale schema.
@@ -23,6 +24,8 @@ async function main(): Promise<void> {
 
   try {
     await app.listen({ port: config.port, host: config.host });
+    // Démarre la sauvegarde automatique une fois le serveur en écoute.
+    startBackupScheduler(app.log);
   } catch (err) {
     app.log.error(err);
     process.exit(1);

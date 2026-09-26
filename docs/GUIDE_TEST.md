@@ -53,6 +53,9 @@ Windows au premier lancement.
 9. **Admin** → **Pathologies** : ajouter une pathologie à une spécialité. **Calendriers** :
    modifier les jours d'un spécialiste. **Utilisateurs** : créer un spécialiste (avec
    sa spécialité). **Rapports** : indicateurs du jour.
+10. **Admin** → **Sauvegardes** : une sauvegarde est déjà créée au démarrage ;
+    *Sauvegarder maintenant* en crée une, *Télécharger* récupère le fichier `.db`
+    (à copier sur une clé USB). Vérifier aussi les fichiers dans `backend/data/backups/`.
 
 ## Vérifications développeur
 ```bash

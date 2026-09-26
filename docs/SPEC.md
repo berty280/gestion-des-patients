@@ -72,6 +72,13 @@ Voir `backend/src/db/migrations/001_init.sql`. Tables principales :
   `DELETE /invoices/:id` (admin).
 - Utilisateurs : `GET/POST/PATCH /users` (admin).
 - Rapports : `GET /reports/dashboard` (tous), `GET /reports/activity?date=` (admin).
+- Sauvegardes : `GET /backups`, `POST /backups`, `GET /backups/:name/download` (admin).
+
+## 7. Sauvegarde
+Sauvegarde automatique de la base SQLite (copie cohérente via `db.backup()`) au démarrage
+puis à intervalle régulier (24 h par défaut), avec rotation. Réglages `.env` `BACKUP_*` ;
+`BACKUP_DIR` peut pointer vers un disque externe. L'admin peut sauvegarder à la demande et
+télécharger une sauvegarde depuis l'écran **Sauvegardes**.
 
 ## 6. Contraintes techniques
 - Mono-port en prod locale (API + PWA sur `:3000`), écoute `0.0.0.0` pour l'accès réseau.

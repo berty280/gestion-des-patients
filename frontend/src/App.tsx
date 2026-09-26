@@ -13,6 +13,7 @@ import { PathologiesPage } from './pages/PathologiesPage';
 import { SchedulesPage } from './pages/SchedulesPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { UsersPage } from './pages/UsersPage';
+import { BackupsPage } from './pages/BackupsPage';
 
 export default function App() {
   return (
@@ -99,6 +100,14 @@ export default function App() {
           element={
             <RequireRole min="ADMIN">
               <UsersPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/sauvegardes"
+          element={
+            <RequireRole min="ADMIN">
+              <BackupsPage />
             </RequireRole>
           }
         />

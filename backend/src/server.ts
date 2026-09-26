@@ -16,6 +16,7 @@ import { specialtyRoutes } from './routes/specialties.js';
 import { pathologyRoutes } from './routes/pathologies.js';
 import { scheduleRoutes } from './routes/schedules.js';
 import { referralRoutes } from './routes/referrals.js';
+import { backupRoutes } from './routes/backups.js';
 
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -65,6 +66,7 @@ export async function buildServer(): Promise<FastifyInstance> {
       await api.register(pathologyRoutes);
       await api.register(scheduleRoutes);
       await api.register(referralRoutes);
+      await api.register(backupRoutes);
     },
     { prefix: '/api' },
   );

@@ -30,6 +30,14 @@ export const config = {
   jwtSecret: env('JWT_SECRET', 'change-me-in-production'),
   seedDefaultPassword: env('SEED_DEFAULT_PASSWORD', 'clinique123'),
   clinicName: env('CLINIC_NAME', 'Centre de Santé'),
+  backup: {
+    // Sauvegarde automatique de la base SQLite.
+    enabled: env('BACKUP_ENABLED', 'true') !== 'false',
+    dir: resolvePath(env('BACKUP_DIR', './data/backups')),
+    intervalHours: Number(env('BACKUP_INTERVAL_HOURS', '24')),
+    keep: Number(env('BACKUP_KEEP', '30')),
+    onStart: env('BACKUP_ON_START', 'true') !== 'false',
+  },
 } as const;
 
 export type AppConfig = typeof config;

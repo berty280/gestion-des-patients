@@ -66,7 +66,9 @@ spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes
   `requireRole`, `requireMedecin`.
 - `routes/` : `patients` (dont `identify`, `:id/record`), `consultations`,
   `appointments`, `referrals`, `pathologies`, `schedules`, `specialties`
-  (dont `/specialists`), `invoices`, `users`, `reports`.
+  (dont `/specialists`), `invoices`, `users`, `reports`, `backups`.
+- `services/backup.ts` : sauvegarde SQLite (`db.backup()`, rotation, planificateur
+  démarré au boot depuis `index.ts`). Config `backup.*` (`.env` `BACKUP_*`).
 - `lib/` : `errors`, `roles` (rangs + `SPECIALTIES`/`specialtyLabel`), `validate`.
 
 ## Frontend (`frontend/src/`)
@@ -76,7 +78,7 @@ spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes
 - `pages/` : `Login`, `Dashboard`, `Patients`(+`PatientDetail`,`PatientFormModal`),
   `Appointments` (file d'attente / agenda spécialiste), `Consultations`,
   `ConsultationFormModal`/`ConsultationView`, `Referrals`/`ReferralModal`,
-  `Pathologies`, `Schedules`, `Invoices`(+modales), `Reports`, `Users`.
+  `Pathologies`, `Schedules`, `Invoices`(+modales), `Reports`, `Users`, `Backups`.
 
 ## Conventions & garde-fous
 - TS strict ; `npm run typecheck` **et** `npm run build` doivent passer ; `npm audit` propre.
@@ -87,4 +89,4 @@ spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes
 
 ## Pistes d'amélioration (hors périmètre actuel)
 Impression PDF ordonnances/reçus, résultats d'examens (saisie labo), rappels SMS de RDV,
-statistiques par spécialiste, sauvegarde automatique de la base, HTTPS, multi-centres.
+statistiques par spécialiste, HTTPS, multi-centres. (Sauvegarde automatique : faite.)

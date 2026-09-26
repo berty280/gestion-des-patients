@@ -67,10 +67,24 @@ Mot de passe pour tous : `clinique123`
 
 Voir [`docs/GUIDE_TEST.md`](docs/GUIDE_TEST.md) pour un scénario de test complet.
 
+## Sauvegarde des données
+La base est sauvegardée **automatiquement** (copie cohérente, compatible avec la base en
+cours d'utilisation) : au démarrage du serveur puis toutes les 24 h par défaut, avec
+rotation (30 sauvegardes conservées). Réglages dans `backend/.env` (`BACKUP_ENABLED`,
+`BACKUP_DIR`, `BACKUP_INTERVAL_HOURS`, `BACKUP_KEEP`, `BACKUP_ON_START`).
+
+- En **Administrateur**, l'écran **Sauvegardes** permet de sauvegarder à la demande et de
+  **télécharger** une sauvegarde pour la mettre sur une **clé USB / disque externe**.
+- Recommandé en production : pointer `BACKUP_DIR` vers un disque externe (ex.
+  `BACKUP_DIR=E:/sauvegardes-clinique`) **et** conserver une copie hors du poste serveur.
+- Restauration : arrêter le serveur, remplacer `backend/data/clinique.db` par le fichier de
+  sauvegarde (renommé `clinique.db`), supprimer les éventuels `clinique.db-wal`/`-shm`,
+  puis redémarrer.
+
 ## Sécurité (production)
 - Changer `JWT_SECRET` et les mots de passe des comptes de démo dans `backend/.env`.
-- Sauvegarder régulièrement `backend/data/clinique.db`.
 - Renseigner `CLINIC_NAME` dans `backend/.env`.
+- Utiliser un onduleur sur le poste serveur (coupures de courant) et vérifier les sauvegardes.
 
 ## Commandes utiles
 ```bash

@@ -47,6 +47,7 @@ const navItems: NavItem[] = [
   },
   { to: '/rapports', label: 'Rapports', show: (u) => u.role === 'ADMIN' },
   { to: '/utilisateurs', label: 'Utilisateurs', show: (u) => u.role === 'ADMIN' },
+  { to: '/sauvegardes', label: 'Sauvegardes', show: (u) => u.role === 'ADMIN' },
 ];
 
 export function Layout() {
