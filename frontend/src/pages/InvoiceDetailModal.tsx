@@ -12,6 +12,7 @@ import type { InvoiceDetail, PaymentMethod } from '../lib/types';
 import { useToast } from '../components/Toast';
 import { Badge, Button, Field, Select, Spinner } from '../components/ui';
 import { Modal } from '../components/Modal';
+import { ReceiptPrint } from '../components/Printables';
 
 export function InvoiceDetailModal({
   invoiceId,
@@ -29,6 +30,7 @@ export function InvoiceDetailModal({
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState<PaymentMethod>('ESPECES');
   const [busy, setBusy] = useState(false);
+  const [printing, setPrinting] = useState(false);
 
   function load() {
     api<InvoiceDetail>(`/invoices/${invoiceId}`)
@@ -197,12 +199,16 @@ export function InvoiceDetailModal({
             ) : (
               <span />
             )}
-            <Button variant="secondary" onClick={onClose}>
-              Fermer
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => setPrinting(true)}>
+                Imprimer le reçu
+              </Button>
+              <Button onClick={onClose}>Fermer</Button>
+            </div>
           </div>
         </div>
       )}
+      {printing && inv && <ReceiptPrint invoice={inv} onClose={() => setPrinting(false)} />}
     </Modal>
   );
 }

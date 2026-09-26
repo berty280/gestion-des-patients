@@ -56,6 +56,10 @@ Windows au premier lancement.
 10. **Admin** → **Sauvegardes** : une sauvegarde est déjà créée au démarrage ;
     *Sauvegarder maintenant* en crée une, *Télécharger* récupère le fichier `.db`
     (à copier sur une clé USB). Vérifier aussi les fichiers dans `backend/data/backups/`.
+11. **Impression** : ouvrir une consultation avec médicaments → *Imprimer l'ordonnance*
+    (et *Imprimer la demande d'examens* s'il y a des examens). Ouvrir une facture →
+    *Imprimer le reçu*. L'aperçu n'affiche que le document (en-tête du centre) ;
+    utiliser la fenêtre d'impression du navigateur (ou « Enregistrer en PDF »).
 
 ## Vérifications développeur
 ```bash

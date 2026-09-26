@@ -5,6 +5,7 @@ import { examCategoryLabel, formatDateTime } from '../lib/format';
 import type { Consultation } from '../lib/types';
 import { Badge, Button, Spinner } from '../components/ui';
 import { Modal } from '../components/Modal';
+import { ExamOrderPrint, PrescriptionPrint } from '../components/Printables';
 
 function Row({ label, value }: { label: string; value: string | number | null | undefined }) {
   if (value === null || value === undefined || value === '') return null;
@@ -28,6 +29,7 @@ export function ConsultationView({
   // Recharge la version complète (pathologies/prescriptions/examens) si absente.
   const [c, setC] = useState<Consultation>(consultation);
   const [loading, setLoading] = useState(!consultation.prescriptions);
+  const [print, setPrint] = useState<null | 'ordonnance' | 'examens'>(null);
 
   useEffect(() => {
     if (!consultation.prescriptions) {
@@ -119,14 +121,26 @@ export function ConsultationView({
           <Row label="Résumé de fin de séance" value={c.summary} />
           <Row label="Notes" value={c.notes} />
 
-          <div className="no-print flex justify-end gap-2 pt-3">
-            <Button variant="secondary" onClick={() => window.print()}>
-              Imprimer
-            </Button>
+          <div className="no-print flex flex-wrap justify-end gap-2 pt-3">
+            {(c.prescriptions?.length ?? 0) > 0 && (
+              <Button variant="secondary" onClick={() => setPrint('ordonnance')}>
+                Imprimer l'ordonnance
+              </Button>
+            )}
+            {(c.exams?.length ?? 0) > 0 && (
+              <Button variant="secondary" onClick={() => setPrint('examens')}>
+                Imprimer la demande d'examens
+              </Button>
+            )}
             <Button onClick={onClose}>Fermer</Button>
           </div>
         </div>
       )}
+
+      {print === 'ordonnance' && (
+        <PrescriptionPrint consultation={c} onClose={() => setPrint(null)} />
+      )}
+      {print === 'examens' && <ExamOrderPrint consultation={c} onClose={() => setPrint(null)} />}
     </Modal>
   );
 }

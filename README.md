@@ -20,6 +20,8 @@ Yaoundé ; interface en français, montants en **FCFA**). Application web instal
   de prestation** (jours de présence au centre).
 - **Dossier numérique unifié** — toutes les consultations (générales + spécialisées),
   les médicaments et les examens prescrits, les références, rattachés au même patient.
+- **Impression** — ordonnance médicale, demande d'examens (depuis une consultation) et
+  reçu de paiement (depuis une facture), avec en-tête du centre, prêts à imprimer.
 - **File d'attente & rendez-vous**, **facturation & paiements**, **tableau de bord**
   et **rapports d'activité**.
 

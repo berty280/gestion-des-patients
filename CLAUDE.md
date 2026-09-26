@@ -74,7 +74,9 @@ spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes
 ## Frontend (`frontend/src/`)
 - `lib/` : `api`, `types`, `roles`, `format` (FCFA, dates, spécialités, jours), `useFetch`.
 - `components/` : `Layout` (nav selon le rôle), `Guards`, `PatientPicker`,
-  `PathologyPicker`, `Modal`, `Toast`, `ui`.
+  `PathologyPicker`, `Modal`, `Toast`, `ui`, `Printables` (ordonnance / demande
+  d'examens / reçu, impression navigateur isolée via `.print-document`).
+- `lib/useClinic.ts` : nom du centre (depuis `/config`) pour l'en-tête des documents.
 - `pages/` : `Login`, `Dashboard`, `Patients`(+`PatientDetail`,`PatientFormModal`),
   `Appointments` (file d'attente / agenda spécialiste), `Consultations`,
   `ConsultationFormModal`/`ConsultationView`, `Referrals`/`ReferralModal`,
@@ -88,5 +90,6 @@ spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes
 - Énums et libellés métier en français.
 
 ## Pistes d'amélioration (hors périmètre actuel)
-Impression PDF ordonnances/reçus, résultats d'examens (saisie labo), rappels SMS de RDV,
-statistiques par spécialiste, HTTPS, multi-centres. (Sauvegarde automatique : faite.)
+Résultats d'examens (saisie labo), rappels SMS de RDV, statistiques par spécialiste,
+HTTPS, multi-centres. (Faites : sauvegarde automatique ; impression ordonnances /
+demandes d'examens / reçus via le navigateur.)
