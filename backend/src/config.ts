@@ -30,6 +30,8 @@ export const config = {
   jwtSecret: env('JWT_SECRET', 'change-me-in-production'),
   seedDefaultPassword: env('SEED_DEFAULT_PASSWORD', 'clinique123'),
   clinicName: env('CLINIC_NAME', 'Centre de Santé'),
+  clinicAddress: env('CLINIC_ADDRESS', 'Yaoundé, Cameroun'),
+  clinicPhone: env('CLINIC_PHONE', ''),
   backup: {
     // Sauvegarde automatique de la base SQLite.
     enabled: env('BACKUP_ENABLED', 'true') !== 'false',

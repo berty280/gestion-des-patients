@@ -73,6 +73,8 @@ Voir `backend/src/db/migrations/001_init.sql`. Tables principales :
 - Utilisateurs : `GET/POST/PATCH /users` (admin).
 - Rapports : `GET /reports/dashboard` (tous), `GET /reports/activity?date=` (admin).
 - Sauvegardes : `GET /backups`, `POST /backups`, `GET /backups/:name/download` (admin).
+- Identité du centre : `GET /config` (public : nom/adresse/téléphone/logo),
+  `GET/PATCH /settings` (admin) — stockée en table `settings` (migration 002).
 
 ## 7. Sauvegarde
 Sauvegarde automatique de la base SQLite (copie cohérente via `db.backup()`) au démarrage

@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../lib/api';
+import { useClinicInfo } from '../lib/useClinic';
 import { Button, Card, Field } from '../components/ui';
 
 export function LoginPage() {
   const { login } = useAuth();
+  const clinic = useClinicInfo();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,8 +46,15 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold text-blue-700">Clinique</h1>
-          <p className="text-sm text-slate-500">Gestion des patients du centre de santé</p>
+          {clinic.clinicLogo && (
+            <img
+              src={clinic.clinicLogo}
+              alt="Logo"
+              className="mx-auto mb-3 h-20 w-20 object-contain"
+            />
+          )}
+          <h1 className="text-2xl font-bold text-blue-700">{clinic.clinicName}</h1>
+          <p className="text-sm text-slate-500">Gestion des patients</p>
         </div>
         <Card>
           <form onSubmit={submit} className="space-y-4">

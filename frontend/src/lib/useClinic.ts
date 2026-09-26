@@ -1,21 +1,40 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
 
-let cached: string | null = null;
+export interface ClinicInfo {
+  clinicName: string;
+  clinicAddress: string;
+  clinicPhone: string;
+  clinicLogo: string | null;
+}
 
-/** Nom du centre de santé (depuis /api/config), mis en cache pour la session. */
-export function useClinicName(): string {
-  const [name, setName] = useState(cached ?? 'Centre de Santé');
+const DEFAULT: ClinicInfo = {
+  clinicName: 'Centre de Santé',
+  clinicAddress: 'Yaoundé, Cameroun',
+  clinicPhone: '',
+  clinicLogo: null,
+};
+
+let cached: ClinicInfo | null = null;
+
+/** Identité du centre (depuis /api/config), mise en cache pour la session. */
+export function useClinicInfo(): ClinicInfo {
+  const [info, setInfo] = useState<ClinicInfo>(cached ?? DEFAULT);
 
   useEffect(() => {
     if (cached) return;
-    api<{ clinicName: string }>('/config')
+    api<ClinicInfo>('/config')
       .then((c) => {
-        cached = c.clinicName || 'Centre de Santé';
-        setName(cached);
+        cached = { ...DEFAULT, ...c };
+        setInfo(cached);
       })
       .catch(() => {});
   }, []);
 
-  return name;
+  return info;
+}
+
+/** Force le rechargement de l'identité (après modification dans Paramètres). */
+export function clearClinicInfoCache(): void {
+  cached = null;
 }

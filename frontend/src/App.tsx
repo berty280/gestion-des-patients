@@ -14,6 +14,7 @@ import { SchedulesPage } from './pages/SchedulesPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { UsersPage } from './pages/UsersPage';
 import { BackupsPage } from './pages/BackupsPage';
+import { SettingsPage } from './pages/SettingsPage';
 
 export default function App() {
   return (
@@ -108,6 +109,14 @@ export default function App() {
           element={
             <RequireRole min="ADMIN">
               <BackupsPage />
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/parametres"
+          element={
+            <RequireRole min="ADMIN">
+              <SettingsPage />
             </RequireRole>
           }
         />

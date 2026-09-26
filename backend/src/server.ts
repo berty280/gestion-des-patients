@@ -17,6 +17,8 @@ import { pathologyRoutes } from './routes/pathologies.js';
 import { scheduleRoutes } from './routes/schedules.js';
 import { referralRoutes } from './routes/referrals.js';
 import { backupRoutes } from './routes/backups.js';
+import { settingsRoutes } from './routes/settings.js';
+import { getClinicInfo } from './services/settings.js';
 
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -52,8 +54,8 @@ export async function buildServer(): Promise<FastifyInstance> {
         };
       });
 
-      // Exposé au frontend pour l'affichage (nom du centre).
-      api.get('/config', async () => ({ clinicName: config.clinicName }));
+      // Exposé au frontend pour l'affichage (identité du centre).
+      api.get('/config', async () => getClinicInfo());
 
       await api.register(authRoutes);
       await api.register(patientRoutes);
@@ -67,6 +69,7 @@ export async function buildServer(): Promise<FastifyInstance> {
       await api.register(scheduleRoutes);
       await api.register(referralRoutes);
       await api.register(backupRoutes);
+      await api.register(settingsRoutes);
     },
     { prefix: '/api' },
   );

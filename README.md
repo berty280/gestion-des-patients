@@ -83,9 +83,16 @@ rotation (30 sauvegardes conservées). Réglages dans `backend/.env` (`BACKUP_EN
   sauvegarde (renommé `clinique.db`), supprimer les éventuels `clinique.db-wal`/`-shm`,
   puis redémarrer.
 
+## Identité du centre (nom, adresse, téléphone, logo)
+En **Administrateur**, l'écran **Paramètres** permet de saisir le **nom**, l'**adresse**,
+le **téléphone** et d'**téléverser un logo** du centre. Ces informations apparaissent en
+en-tête des documents imprimés (ordonnances, demandes d'examens, reçus) et sur l'écran de
+connexion. Valeurs initiales possibles via `backend/.env`
+(`CLINIC_NAME`, `CLINIC_ADDRESS`, `CLINIC_PHONE`) — les valeurs saisies dans l'app priment.
+
 ## Sécurité (production)
 - Changer `JWT_SECRET` et les mots de passe des comptes de démo dans `backend/.env`.
-- Renseigner `CLINIC_NAME` dans `backend/.env`.
+- Renseigner l'identité du centre via Admin → Paramètres (ou `CLINIC_*` dans `.env`).
 - Utiliser un onduleur sur le poste serveur (coupures de courant) et vérifier les sauvegardes.
 
 ## Commandes utiles

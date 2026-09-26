@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react';
-import { useClinicName } from '../lib/useClinic';
+import { useClinicInfo, type ClinicInfo } from '../lib/useClinic';
 import { fcfa, formatDate, formatDateTime, examCategoryLabel, paymentMethodLabel } from '../lib/format';
 import type { Consultation, InvoiceDetail } from '../lib/types';
 
@@ -48,13 +48,23 @@ function PrintFrame({
   );
 }
 
-function DocHeader({ clinic, docTitle }: { clinic: string; docTitle: string }) {
+function DocHeader({ clinic, docTitle }: { clinic: ClinicInfo; docTitle: string }) {
   return (
     <div className="mb-6 border-b-2 border-slate-800 pb-3">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-xl font-bold uppercase tracking-wide">{clinic}</div>
-          <div className="text-xs text-slate-500">Yaoundé, Cameroun</div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {clinic.clinicLogo && (
+            <img src={clinic.clinicLogo} alt="Logo" className="h-16 w-16 object-contain" />
+          )}
+          <div>
+            <div className="text-xl font-bold uppercase tracking-wide">{clinic.clinicName}</div>
+            {clinic.clinicAddress && (
+              <div className="text-xs text-slate-500">{clinic.clinicAddress}</div>
+            )}
+            {clinic.clinicPhone && (
+              <div className="text-xs text-slate-500">Tél. : {clinic.clinicPhone}</div>
+            )}
+          </div>
         </div>
         <div className="text-right">
           <div className="text-lg font-semibold uppercase text-slate-700">{docTitle}</div>
@@ -103,7 +113,7 @@ export function PrescriptionPrint({
   consultation: Consultation;
   onClose: () => void;
 }) {
-  const clinic = useClinicName();
+  const clinic = useClinicInfo();
   const meds = consultation.prescriptions ?? [];
   return (
     <PrintFrame title="Ordonnance" onClose={onClose}>
@@ -139,7 +149,7 @@ export function ExamOrderPrint({
   consultation: Consultation;
   onClose: () => void;
 }) {
-  const clinic = useClinicName();
+  const clinic = useClinicInfo();
   const exams = consultation.exams ?? [];
   return (
     <PrintFrame title="Demande d'examens" onClose={onClose}>
@@ -173,7 +183,7 @@ export function ExamOrderPrint({
 
 /** Reçu de paiement (facture). */
 export function ReceiptPrint({ invoice, onClose }: { invoice: InvoiceDetail; onClose: () => void }) {
-  const clinic = useClinicName();
+  const clinic = useClinicInfo();
   const remaining = invoice.total - invoice.paid;
   return (
     <PrintFrame title="Reçu" onClose={onClose}>

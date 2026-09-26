@@ -69,6 +69,9 @@ spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes
   (dont `/specialists`), `invoices`, `users`, `reports`, `backups`.
 - `services/backup.ts` : sauvegarde SQLite (`db.backup()`, rotation, planificateur
   démarré au boot depuis `index.ts`). Config `backup.*` (`.env` `BACKUP_*`).
+- `services/settings.ts` : identité du centre (nom/adresse/téléphone/logo) en table
+  `settings` avec repli `.env` (`CLINIC_NAME/ADDRESS/PHONE`). Exposée via `GET /config`
+  (public) ; modifiée via `GET/PATCH /settings` (admin, route `routes/settings.ts`).
 - `lib/` : `errors`, `roles` (rangs + `SPECIALTIES`/`specialtyLabel`), `validate`.
 
 ## Frontend (`frontend/src/`)
@@ -80,7 +83,7 @@ spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes
 - `pages/` : `Login`, `Dashboard`, `Patients`(+`PatientDetail`,`PatientFormModal`),
   `Appointments` (file d'attente / agenda spécialiste), `Consultations`,
   `ConsultationFormModal`/`ConsultationView`, `Referrals`/`ReferralModal`,
-  `Pathologies`, `Schedules`, `Invoices`(+modales), `Reports`, `Users`, `Backups`.
+  `Pathologies`, `Schedules`, `Invoices`(+modales), `Reports`, `Users`, `Backups`, `Settings`.
 
 ## Conventions & garde-fous
 - TS strict ; `npm run typecheck` **et** `npm run build` doivent passer ; `npm audit` propre.
