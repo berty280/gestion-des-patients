@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Impression : n'imprimer que le document (.print-document), masquer le reste de l'app. */
+@media print {
+  body {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+
+  /* Quand un document imprimable est ouvert, on masque tout sauf lui. */
+  body:has(.print-document) * {
+    visibility: hidden;
+  }
+  body:has(.print-document) .print-document,
+  body:has(.print-document) .print-document * {
+    visibility: visible;
+  }
+  .print-document {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  /* Repli si aucun document imprimable : masquer l'habillage. */
+  body:not(:has(.print-document)) header,
+  body:not(:has(.print-document)) nav {
+    display: none !important;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 16mm;
+}

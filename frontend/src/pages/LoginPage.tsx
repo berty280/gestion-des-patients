@@ -1,0 +1,102 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
+import { ApiError } from '../lib/api';
+import { useClinicInfo } from '../lib/useClinic';
+import { Button, Card, Field } from '../components/ui';
+
+export function LoginPage() {
+  const { login } = useAuth();
+  const clinic = useClinicInfo();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setBusy(true);
+    try {
+      await login(email, password);
+      navigate('/');
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Connexion impossible');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function quickFill(account: string) {
+    setEmail(`${account}@clinique.local`);
+    setPassword('clinique123');
+  }
+
+  const demoAccounts: Array<{ key: string; label: string }> = [
+    { key: 'accueil', label: 'Accueil' },
+    { key: 'generaliste', label: 'Généraliste' },
+    { key: 'gyneco', label: 'Gynéco' },
+    { key: 'kine', label: 'Kiné' },
+    { key: 'radiologue', label: 'Radiologue' },
+    { key: 'admin', label: 'Admin' },
+  ];
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 text-center">
+          {clinic.clinicLogo && (
+            <img
+              src={clinic.clinicLogo}
+              alt="Logo"
+              className="mx-auto mb-3 h-20 w-20 object-contain"
+            />
+          )}
+          <h1 className="text-2xl font-bold text-blue-700">{clinic.clinicName}</h1>
+          <p className="text-sm text-slate-500">Gestion des patients</p>
+        </div>
+        <Card>
+          <form onSubmit={submit} className="space-y-4">
+            <Field
+              label="Email"
+              type="email"
+              autoComplete="username"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Field
+              label="Mot de passe"
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {error && <p className="text-sm text-rose-600">{error}</p>}
+            <Button type="submit" disabled={busy} className="w-full">
+              {busy ? 'Connexion…' : 'Se connecter'}
+            </Button>
+          </form>
+
+          <div className="mt-4 border-t border-slate-100 pt-3">
+            <p className="mb-2 text-xs text-slate-400">Comptes de démonstration :</p>
+            <div className="flex flex-wrap gap-2">
+              {demoAccounts.map((a) => (
+                <button
+                  key={a.key}
+                  type="button"
+                  onClick={() => quickFill(a.key)}
+                  className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 hover:bg-slate-200"
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
