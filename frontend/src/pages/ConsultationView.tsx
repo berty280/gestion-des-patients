@@ -138,9 +138,11 @@ export function ConsultationView({
       )}
 
       {print === 'ordonnance' && (
-        <PrescriptionPrint consultation={c} onClose={() => setPrint(null)} />
+        <PrescriptionPrint consultation={c} patientName={patientName} onClose={() => setPrint(null)} />
       )}
-      {print === 'examens' && <ExamOrderPrint consultation={c} onClose={() => setPrint(null)} />}
+      {print === 'examens' && (
+        <ExamOrderPrint consultation={c} patientName={patientName} onClose={() => setPrint(null)} />
+      )}
     </Modal>
   );
 }

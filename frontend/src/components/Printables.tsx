@@ -74,14 +74,16 @@ function DocHeader({ clinic, docTitle }: { clinic: ClinicInfo; docTitle: string 
   );
 }
 
-function PatientLine({ c }: { c: Consultation }) {
+function PatientLine({ c, patientName }: { c: Consultation; patientName?: string }) {
+  const name =
+    (c.last_name || c.first_name)
+      ? `${(c.last_name ?? '').toUpperCase()} ${c.first_name ?? ''}`.trim()
+      : (patientName ?? '');
   return (
     <div className="mb-4 flex flex-wrap justify-between gap-2 text-sm">
       <div>
         <span className="text-slate-500">Patient : </span>
-        <span className="font-medium">
-          {(c.last_name ?? '').toUpperCase()} {c.first_name}
-        </span>
+        <span className="font-medium">{name}</span>
         {c.patient_code ? <span className="text-slate-500"> ({c.patient_code})</span> : null}
       </div>
       <div>
@@ -108,9 +110,11 @@ function Signature({ who }: { who: string | null | undefined }) {
 /** Ordonnance médicale (médicaments prescrits). */
 export function PrescriptionPrint({
   consultation,
+  patientName,
   onClose,
 }: {
   consultation: Consultation;
+  patientName?: string;
   onClose: () => void;
 }) {
   const clinic = useClinicInfo();
@@ -118,7 +122,7 @@ export function PrescriptionPrint({
   return (
     <PrintFrame title="Ordonnance" onClose={onClose}>
       <DocHeader clinic={clinic} docTitle="Ordonnance médicale" />
-      <PatientLine c={consultation} />
+      <PatientLine c={consultation} patientName={patientName} />
 
       <ol className="my-6 space-y-4">
         {meds.map((m, i) => (
@@ -144,9 +148,11 @@ export function PrescriptionPrint({
 /** Demande d'examens (laboratoire / imagerie). */
 export function ExamOrderPrint({
   consultation,
+  patientName,
   onClose,
 }: {
   consultation: Consultation;
+  patientName?: string;
   onClose: () => void;
 }) {
   const clinic = useClinicInfo();
@@ -154,7 +160,7 @@ export function ExamOrderPrint({
   return (
     <PrintFrame title="Demande d'examens" onClose={onClose}>
       <DocHeader clinic={clinic} docTitle="Demande d'examens" />
-      <PatientLine c={consultation} />
+      <PatientLine c={consultation} patientName={patientName} />
 
       <ul className="my-6 space-y-2">
         {exams.map((e) => (
