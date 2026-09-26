@@ -163,6 +163,18 @@ export interface PaymentRow {
   created_at: string;
 }
 
+export interface AttachmentRow {
+  id: number;
+  patient_id: number;
+  exam_order_id: number | null;
+  filename: string;
+  mime: string;
+  size: number;
+  label: string | null;
+  uploaded_by: number | null;
+  created_at: string;
+}
+
 export interface JwtUser {
   id: number;
   email: string;

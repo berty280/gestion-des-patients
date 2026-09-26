@@ -210,6 +210,19 @@ export interface InvoiceDetail extends Invoice {
   payments: Payment[];
 }
 
+export interface Attachment {
+  id: number;
+  patient_id: number;
+  exam_order_id: number | null;
+  filename: string;
+  mime: string;
+  size: number;
+  label: string | null;
+  uploaded_by: number | null;
+  created_at: string;
+  uploaded_by_name?: string | null;
+}
+
 export interface PatientRecord {
   patient: Patient;
   consultations: Consultation[];

@@ -22,6 +22,7 @@ import { ConsultationFormModal } from './ConsultationFormModal';
 import { ConsultationView } from './ConsultationView';
 import { ReferralModal } from './ReferralModal';
 import { InvoiceFormModal } from './InvoiceFormModal';
+import { PatientAttachments } from './PatientAttachments';
 
 function Info({ label, value }: { label: string; value: string | null | undefined }) {
   return (
@@ -257,6 +258,10 @@ export function PatientDetailPage() {
             </div>
           )}
         </>
+      )}
+
+      {medecin && (
+        <PatientAttachments patientId={patient.id} exams={record?.exams ?? []} onChanged={loadRecord} />
       )}
 
       {canBill && (

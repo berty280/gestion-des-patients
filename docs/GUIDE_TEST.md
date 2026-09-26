@@ -62,6 +62,11 @@ Windows au premier lancement.
     (et *Imprimer la demande d'examens* s'il y a des examens). Ouvrir une facture →
     *Imprimer le reçu*. L'aperçu n'affiche que le document (en-tête = identité du centre) ;
     utiliser la fenêtre d'impression du navigateur (ou « Enregistrer en PDF »).
+13. **Résultats d'examens** (généraliste/spécialiste) : sur un patient, section
+    *Résultats d'examens & documents* → choisir un fichier **PDF**, une description, le
+    rattacher éventuellement à un examen prescrit, *Téléverser*. L'examen passe à
+    « réalisé ». Cliquer sur le document pour l'ouvrir. Les fichiers étant en base, ils
+    sont inclus dans les sauvegardes.
 
 ## Vérifications développeur
 ```bash

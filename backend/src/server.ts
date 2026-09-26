@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import fastifyStatic from '@fastify/static';
+import fastifyMultipart from '@fastify/multipart';
 import { existsSync } from 'node:fs';
 import { config } from './config.js';
 import { getDb } from './db/connection.js';
@@ -18,6 +19,7 @@ import { scheduleRoutes } from './routes/schedules.js';
 import { referralRoutes } from './routes/referrals.js';
 import { backupRoutes } from './routes/backups.js';
 import { settingsRoutes } from './routes/settings.js';
+import { attachmentRoutes } from './routes/attachments.js';
 import { getClinicInfo } from './services/settings.js';
 
 export async function buildServer(): Promise<FastifyInstance> {
@@ -32,6 +34,9 @@ export async function buildServer(): Promise<FastifyInstance> {
   });
 
   await app.register(cors, { origin: config.corsOrigin, credentials: true });
+  await app.register(fastifyMultipart, {
+    limits: { fileSize: 10 * 1024 * 1024, files: 1 }, // 10 Mo, un fichier par requête
+  });
   await registerAuth(app);
 
   // All API endpoints live under /api so the SPA can own the rest of the paths.
@@ -70,6 +75,7 @@ export async function buildServer(): Promise<FastifyInstance> {
       await api.register(referralRoutes);
       await api.register(backupRoutes);
       await api.register(settingsRoutes);
+      await api.register(attachmentRoutes);
     },
     { prefix: '/api' },
   );

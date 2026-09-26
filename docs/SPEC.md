@@ -75,6 +75,10 @@ Voir `backend/src/db/migrations/001_init.sql`. Tables principales :
 - Sauvegardes : `GET /backups`, `POST /backups`, `GET /backups/:name/download` (admin).
 - Identité du centre : `GET /config` (public : nom/adresse/téléphone/logo),
   `GET/PATCH /settings` (admin) — stockée en table `settings` (migration 002).
+- Pièces jointes (médical) : `GET/POST /patients/:id/attachments`,
+  `GET /attachments/:id/download`, `DELETE /attachments/:id` — fichiers PDF/image
+  (≤ 10 Mo) stockés en BLOB (table `attachments`, migration 003), donc sauvegardés
+  avec la base ; rattacher à un examen prescrit le marque `REALISE`.
 
 ## 7. Sauvegarde
 Sauvegarde automatique de la base SQLite (copie cohérente via `db.backup()`) au démarrage

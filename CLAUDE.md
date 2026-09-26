@@ -49,7 +49,9 @@ spécialiste sont au même niveau (`isMedecin`). Gardé côté API (`requireRole
 Tables : `users` (+`specialty`), `patients`, `pathologies` (catalogue CIM-10 par
 spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes vitaux,
 `findings`, `procedures`, `diagnosis`, `summary`, `referral_id`),
-`consultation_pathologies`, `prescriptions`, `exam_orders` (`LABORATOIRE|IMAGERIE`),
+`consultation_pathologies`, `prescriptions`, `exam_orders` (`LABORATOIRE|IMAGERIE`,
+statut `PRESCRIT|REALISE|ANNULE`), `attachments` (pièces jointes PDF/image en BLOB,
+migration 003 ; incluses dans la sauvegarde car en base), `settings` (migration 002),
 `referrals` (généraliste → spécialité/spécialiste, `appointment_id`, statut),
 `specialist_schedules` (jour de semaine 0–6 + horaires), `appointments`
 (+`assigned_user_id`, `specialty`, `referral_id`), `invoices`/`invoice_items`/`payments`.
@@ -66,7 +68,9 @@ spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes
   `requireRole`, `requireMedecin`.
 - `routes/` : `patients` (dont `identify`, `:id/record`), `consultations`,
   `appointments`, `referrals`, `pathologies`, `schedules`, `specialties`
-  (dont `/specialists`), `invoices`, `users`, `reports`, `backups`.
+  (dont `/specialists`), `invoices`, `users`, `reports`, `backups`, `settings`,
+  `attachments` (upload `@fastify/multipart`, PDF/image ≤ 10 Mo stockés en BLOB,
+  téléchargement inline ; rattacher à un `exam_order` le marque `REALISE`).
 - `services/backup.ts` : sauvegarde SQLite (`db.backup()`, rotation, planificateur
   démarré au boot depuis `index.ts`). Config `backup.*` (`.env` `BACKUP_*`).
 - `services/settings.ts` : identité du centre (nom/adresse/téléphone/logo) en table
@@ -93,6 +97,6 @@ spécialité ou `GENERAL`), `consultations` (type `GENERALE|SPECIALISTE`, signes
 - Énums et libellés métier en français.
 
 ## Pistes d'amélioration (hors périmètre actuel)
-Résultats d'examens (saisie labo), rappels SMS de RDV, statistiques par spécialiste,
-HTTPS, multi-centres. (Faites : sauvegarde automatique ; impression ordonnances /
-demandes d'examens / reçus via le navigateur.)
+Rappels SMS de RDV, statistiques par spécialiste, HTTPS, multi-centres.
+(Faites : sauvegarde automatique ; impression ordonnances / demandes d'examens / reçus ;
+identité du centre (logo/adresse/téléphone) ; upload des résultats d'examens PDF par patient.)

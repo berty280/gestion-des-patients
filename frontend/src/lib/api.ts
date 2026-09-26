@@ -68,3 +68,41 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
+
+/** Envoi d'un fichier (multipart/form-data) avec le jeton d'authentification. */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const token = getToken();
+  const headers: Record<string, string> = {};
+  if (token) headers.authorization = `Bearer ${token}`;
+  const res = await fetch(`/api${path}`, { method: 'POST', headers, body: form });
+
+  if (res.status === 401) {
+    setToken(null);
+    onUnauthorized?.();
+    throw new ApiError(401, 'Session expirée, veuillez vous reconnecter.');
+  }
+  if (!res.ok) {
+    let message = `Erreur ${res.status}`;
+    try {
+      const data = (await res.json()) as { message?: string; error?: string };
+      message = data.message || data.error || message;
+    } catch {
+      /* ignore */
+    }
+    throw new ApiError(res.status, message);
+  }
+  return (await res.json()) as T;
+}
+
+/** Ouvre une ressource protégée (PDF/image) dans un nouvel onglet via un blob. */
+export async function openAuthed(path: string): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`/api${path}`, {
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) throw new ApiError(res.status, 'Ouverture impossible');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}

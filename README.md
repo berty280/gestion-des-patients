@@ -22,6 +22,9 @@ Yaoundé ; interface en français, montants en **FCFA**). Application web instal
   les médicaments et les examens prescrits, les références, rattachés au même patient.
 - **Impression** — ordonnance médicale, demande d'examens (depuis une consultation) et
   reçu de paiement (depuis une facture), avec en-tête du centre, prêts à imprimer.
+- **Résultats d'examens** — téléversement de fichiers **PDF** (ou images) rattachés au
+  dossier du patient, reliables à un examen prescrit (qui passe à « réalisé »). Les fichiers
+  sont stockés **dans la base** et donc **inclus dans les sauvegardes**.
 - **File d'attente & rendez-vous**, **facturation & paiements**, **tableau de bord**
   et **rapports d'activité**.
 
