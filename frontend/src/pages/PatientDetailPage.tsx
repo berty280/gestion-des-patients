@@ -1,22 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError } from '../lib/api';
 import { useAuth } from '../auth/AuthContext';
-import { roleAtLeast } from '../lib/roles';
+import { isMedecin } from '../lib/roles';
+import { specialtyLabel } from '../lib/roles';
 import {
   ageLabel,
+  examCategoryLabel,
   fcfa,
   formatDate,
   formatDateTime,
   invoiceStatusLabel,
+  referralStatusLabel,
   sexLabel,
 } from '../lib/format';
-import type { Consultation, Invoice, PatientDetail } from '../lib/types';
+import type { Consultation, Invoice, PatientDetail, PatientRecord } from '../lib/types';
 import { useToast } from '../components/Toast';
 import { Badge, Button, Card, EmptyState, Spinner } from '../components/ui';
 import { PatientFormModal } from './PatientFormModal';
 import { ConsultationFormModal } from './ConsultationFormModal';
 import { ConsultationView } from './ConsultationView';
+import { ReferralModal } from './ReferralModal';
 import { InvoiceFormModal } from './InvoiceFormModal';
 
 function Info({ label, value }: { label: string; value: string | null | undefined }) {
@@ -33,44 +37,50 @@ export function PatientDetailPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { user } = useAuth();
-  const isSoignant = roleAtLeast(user?.role, 'SOIGNANT');
-  const isAdmin = roleAtLeast(user?.role, 'ADMIN');
+  const medecin = isMedecin(user?.role);
+  const isGeneralist = user?.role === 'GENERALISTE' || user?.role === 'ADMIN';
+  const isSpecialist = user?.role === 'SPECIALISTE';
+  const isAdmin = user?.role === 'ADMIN';
+  const canBill = user?.role === 'ACCUEIL' || user?.role === 'ADMIN';
 
   const [patient, setPatient] = useState<PatientDetail | null>(null);
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [record, setRecord] = useState<PatientRecord | null>(null);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [editing, setEditing] = useState(false);
-  const [newConsult, setNewConsult] = useState(false);
+  const [newConsultType, setNewConsultType] = useState<null | 'GENERALE' | 'SPECIALISTE'>(null);
+  const [referring, setReferring] = useState(false);
   const [newInvoice, setNewInvoice] = useState(false);
   const [viewConsult, setViewConsult] = useState<Consultation | null>(null);
 
-  function loadPatient() {
+  const loadPatient = useCallback(() => {
     api<PatientDetail>(`/patients/${id}`)
       .then(setPatient)
       .catch((e) => toast.error(e instanceof ApiError ? e.message : 'Erreur'))
       .finally(() => setLoading(false));
-  }
-  function loadConsultations() {
-    if (!isSoignant) return;
-    api<Consultation[]>(`/consultations?patient_id=${id}`)
-      .then(setConsultations)
+  }, [id, toast]);
+
+  const loadRecord = useCallback(() => {
+    if (!medecin) return;
+    api<PatientRecord>(`/patients/${id}/record`)
+      .then(setRecord)
       .catch(() => {});
-  }
-  function loadInvoices() {
+  }, [id, medecin]);
+
+  const loadInvoices = useCallback(() => {
+    if (!canBill) return;
     api<Invoice[]>(`/invoices?patient_id=${id}`)
       .then(setInvoices)
       .catch(() => {});
-  }
+  }, [id, canBill]);
 
   useEffect(() => {
     setLoading(true);
     loadPatient();
-    loadConsultations();
+    loadRecord();
     loadInvoices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [loadPatient, loadRecord, loadInvoices]);
 
   async function remove() {
     if (!patient) return;
@@ -89,6 +99,7 @@ export function PatientDetailPage() {
   if (!patient) return <EmptyState>Patient introuvable.</EmptyState>;
 
   const fullName = `${patient.first_name} ${patient.last_name}`;
+  const consultations = record?.consultations ?? [];
 
   return (
     <div className="space-y-4">
@@ -109,10 +120,26 @@ export function PatientDetailPage() {
               {patient.blood_group && <Badge tone="rose">{patient.blood_group}</Badge>}
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button variant="secondary" onClick={() => setEditing(true)}>
               Éditer
             </Button>
+            {isGeneralist && (
+              <Button onClick={() => setNewConsultType('GENERALE')}>+ Consultation</Button>
+            )}
+            {isSpecialist && (
+              <Button onClick={() => setNewConsultType('SPECIALISTE')}>+ Consultation</Button>
+            )}
+            {isGeneralist && (
+              <Button variant="secondary" onClick={() => setReferring(true)}>
+                Référer
+              </Button>
+            )}
+            {canBill && (
+              <Button variant="secondary" onClick={() => setNewInvoice(true)}>
+                + Facture
+              </Button>
+            )}
             {isAdmin && (
               <Button variant="danger" onClick={remove}>
                 Supprimer
@@ -137,69 +164,130 @@ export function PatientDetailPage() {
         )}
       </Card>
 
-      {isSoignant && (
+      {medecin && (
+        <>
+          <Card>
+            <h2 className="mb-3 font-semibold text-slate-800">
+              Historique des consultations{' '}
+              <span className="text-sm font-normal text-slate-400">({consultations.length})</span>
+            </h2>
+            <ul className="divide-y divide-slate-100">
+              {consultations.map((c) => (
+                <li key={c.id}>
+                  <button
+                    onClick={() => setViewConsult(c)}
+                    className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-slate-50"
+                  >
+                    <Badge tone={c.type === 'SPECIALISTE' ? 'sky' : 'blue'}>
+                      {c.type === 'SPECIALISTE' && c.specialty ? specialtyLabel[c.specialty] : 'Générale'}
+                    </Badge>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-slate-800">
+                        {c.diagnosis || c.motif || 'Consultation'}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {formatDateTime(c.created_at)}
+                        {c.user_name ? ` · ${c.user_name}` : ''}
+                      </div>
+                    </div>
+                    <span className="text-slate-300">›</span>
+                  </button>
+                </li>
+              ))}
+              {consultations.length === 0 && <EmptyState>Aucune consultation enregistrée.</EmptyState>}
+            </ul>
+          </Card>
+
+          {record && record.referrals.length > 0 && (
+            <Card>
+              <h2 className="mb-3 font-semibold text-slate-800">Références vers les spécialistes</h2>
+              <ul className="divide-y divide-slate-100">
+                {record.referrals.map((r) => (
+                  <li key={r.id} className="flex items-center gap-3 py-2.5">
+                    <div className="flex-1">
+                      <div className="text-sm font-medium text-slate-800">
+                        {specialtyLabel[r.to_specialty]}
+                        {r.to_user_name ? ` · ${r.to_user_name}` : ''}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        De {r.from_user_name ?? '—'} · {formatDate(r.created_at)}
+                        {r.appointment_at ? ` · RDV ${formatDateTime(r.appointment_at)}` : ''}
+                      </div>
+                    </div>
+                    <Badge
+                      tone={
+                        r.status === 'TERMINE' ? 'emerald' : r.status === 'ANNULE' ? 'rose' : 'amber'
+                      }
+                    >
+                      {referralStatusLabel[r.status]}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {record && (record.prescriptions.length > 0 || record.exams.length > 0) && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Card>
+                <h2 className="mb-2 font-semibold text-slate-800">Médicaments prescrits</h2>
+                <ul className="space-y-1 text-sm">
+                  {record.prescriptions.map((p) => (
+                    <li key={p.id} className="text-slate-700">
+                      {p.medication}
+                      {p.dosage ? ` — ${p.dosage}` : ''}
+                      {p.frequency ? `, ${p.frequency}` : ''}
+                      {p.duration ? `, ${p.duration}` : ''}
+                    </li>
+                  ))}
+                  {record.prescriptions.length === 0 && <EmptyState>Aucun.</EmptyState>}
+                </ul>
+              </Card>
+              <Card>
+                <h2 className="mb-2 font-semibold text-slate-800">Examens prescrits</h2>
+                <ul className="space-y-1 text-sm">
+                  {record.exams.map((e) => (
+                    <li key={e.id} className="text-slate-700">
+                      <span className="text-slate-500">[{examCategoryLabel[e.category]}]</span> {e.label}
+                    </li>
+                  ))}
+                  {record.exams.length === 0 && <EmptyState>Aucun.</EmptyState>}
+                </ul>
+              </Card>
+            </div>
+          )}
+        </>
+      )}
+
+      {canBill && (
         <Card>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold text-slate-800">
-              Consultations{' '}
-              <span className="text-sm font-normal text-slate-400">({consultations.length})</span>
+              Factures <span className="text-sm font-normal text-slate-400">({invoices.length})</span>
             </h2>
-            <Button onClick={() => setNewConsult(true)}>+ Consultation</Button>
+            <Button onClick={() => setNewInvoice(true)}>+ Facture</Button>
           </div>
           <ul className="divide-y divide-slate-100">
-            {consultations.map((c) => (
-              <li key={c.id}>
-                <button
-                  onClick={() => setViewConsult(c)}
-                  className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-slate-50"
-                >
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-slate-800">
-                      {c.motif || c.diagnosis || 'Consultation'}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {formatDateTime(c.created_at)}
-                      {c.user_name ? ` · ${c.user_name}` : ''}
-                    </div>
-                  </div>
-                  <span className="text-slate-300">›</span>
-                </button>
+            {invoices.map((inv) => (
+              <li key={inv.id} className="flex items-center gap-3 py-2.5">
+                <div className="flex-1">
+                  <div className="text-sm font-medium text-slate-800">{inv.code}</div>
+                  <div className="text-xs text-slate-500">{formatDate(inv.created_at)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-slate-800">{fcfa(inv.total)}</div>
+                  <Badge
+                    tone={inv.status === 'PAYEE' ? 'emerald' : inv.status === 'PARTIELLE' ? 'amber' : 'rose'}
+                  >
+                    {invoiceStatusLabel[inv.status]}
+                  </Badge>
+                </div>
               </li>
             ))}
-            {consultations.length === 0 && <EmptyState>Aucune consultation enregistrée.</EmptyState>}
+            {invoices.length === 0 && <EmptyState>Aucune facture.</EmptyState>}
           </ul>
         </Card>
       )}
-
-      <Card>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-800">
-            Factures <span className="text-sm font-normal text-slate-400">({invoices.length})</span>
-          </h2>
-          <Button onClick={() => setNewInvoice(true)}>+ Facture</Button>
-        </div>
-        <ul className="divide-y divide-slate-100">
-          {invoices.map((inv) => (
-            <li key={inv.id} className="flex items-center gap-3 py-2.5">
-              <div className="flex-1">
-                <div className="text-sm font-medium text-slate-800">{inv.code}</div>
-                <div className="text-xs text-slate-500">{formatDate(inv.created_at)}</div>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-semibold text-slate-800">{fcfa(inv.total)}</div>
-                <Badge
-                  tone={
-                    inv.status === 'PAYEE' ? 'emerald' : inv.status === 'PARTIELLE' ? 'amber' : 'rose'
-                  }
-                >
-                  {invoiceStatusLabel[inv.status]}
-                </Badge>
-              </div>
-            </li>
-          ))}
-          {invoices.length === 0 && <EmptyState>Aucune facture.</EmptyState>}
-        </ul>
-      </Card>
 
       {editing && (
         <PatientFormModal
@@ -211,15 +299,28 @@ export function PatientDetailPage() {
           }}
         />
       )}
-      {newConsult && (
+      {newConsultType && (
         <ConsultationFormModal
           patientId={patient.id}
           patientName={fullName}
-          onClose={() => setNewConsult(false)}
+          type={newConsultType}
+          specialty={newConsultType === 'SPECIALISTE' ? user?.specialty ?? null : null}
+          onClose={() => setNewConsultType(null)}
           onSaved={() => {
-            setNewConsult(false);
-            loadConsultations();
+            setNewConsultType(null);
+            loadRecord();
             loadPatient();
+          }}
+        />
+      )}
+      {referring && (
+        <ReferralModal
+          patientId={patient.id}
+          patientName={fullName}
+          onClose={() => setReferring(false)}
+          onSaved={() => {
+            setReferring(false);
+            loadRecord();
           }}
         />
       )}

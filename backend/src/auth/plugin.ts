@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyRequest } from 'fastify';
 import fastifyJwt from '@fastify/jwt';
 import { config } from '../config.js';
 import { forbidden, unauthorized } from '../lib/errors.js';
-import { roleAtLeast } from '../lib/roles.js';
+import { isMedecin, roleAtLeast } from '../lib/roles.js';
 import type { JwtUser, Role } from '../types.js';
 
 declare module '@fastify/jwt' {
@@ -16,6 +16,7 @@ declare module 'fastify' {
   interface FastifyInstance {
     authenticate: (req: FastifyRequest) => Promise<void>;
     requireRole: (min: Role) => (req: FastifyRequest) => Promise<void>;
+    requireMedecin: (req: FastifyRequest) => Promise<void>;
   }
 }
 
@@ -38,5 +39,12 @@ export async function registerAuth(app: FastifyInstance): Promise<void> {
         throw forbidden();
       }
     };
+  });
+
+  // Personnel médical uniquement (généraliste, spécialiste, admin).
+  app.decorate('requireMedecin', async (req: FastifyRequest) => {
+    if (!req.user || !isMedecin(req.user.role)) {
+      throw forbidden('Réservé au personnel médical');
+    }
   });
 }

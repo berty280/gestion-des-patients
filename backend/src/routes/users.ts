@@ -6,18 +6,26 @@ import { badRequest, conflict, notFound } from '../lib/errors.js';
 import { parse } from '../lib/validate.js';
 import type { UserRow } from '../types.js';
 
-const roleEnum = z.enum(['ACCUEIL', 'SOIGNANT', 'ADMIN']);
+const roleEnum = z.enum(['ACCUEIL', 'GENERALISTE', 'SPECIALISTE', 'ADMIN']);
+const specialtyEnum = z.enum(['KINE', 'OPHTALMOLOGIE', 'DERMATOLOGIE', 'GYNECOLOGIE', 'RADIOLOGIE']);
 
-const createSchema = z.object({
-  name: z.string().trim().min(1).max(200),
-  email: z.string().email(),
-  role: roleEnum,
-  password: z.string().min(6).max(200),
-});
+const createSchema = z
+  .object({
+    name: z.string().trim().min(1).max(200),
+    email: z.string().email(),
+    role: roleEnum,
+    specialty: specialtyEnum.nullish(),
+    password: z.string().min(6).max(200),
+  })
+  .refine((v) => v.role !== 'SPECIALISTE' || !!v.specialty, {
+    message: 'Une spécialité est requise pour un spécialiste',
+    path: ['specialty'],
+  });
 
 const updateSchema = z.object({
   name: z.string().trim().min(1).max(200).optional(),
   role: roleEnum.optional(),
+  specialty: specialtyEnum.nullish(),
   active: z.boolean().optional(),
   password: z.string().min(6).max(200).optional(),
 });
@@ -28,6 +36,7 @@ function publicUser(u: UserRow) {
     name: u.name,
     email: u.email,
     role: u.role,
+    specialty: u.specialty,
     active: u.active,
     created_at: u.created_at,
   };
@@ -49,9 +58,12 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
       throw conflict('Un utilisateur avec cet email existe déjà');
     }
     const hash = bcrypt.hashSync(body.password, 10);
+    const specialty = body.role === 'SPECIALISTE' ? (body.specialty ?? null) : null;
     const info = db
-      .prepare('INSERT INTO users (name, email, password_hash, role, active) VALUES (?, ?, ?, ?, 1)')
-      .run(body.name, email, hash, body.role);
+      .prepare(
+        'INSERT INTO users (name, email, password_hash, role, specialty, active) VALUES (?, ?, ?, ?, ?, 1)',
+      )
+      .run(body.name, email, hash, body.role, specialty);
     reply.code(201);
     return publicUser(db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid) as UserRow);
   });
@@ -78,12 +90,22 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
 
     const name = body.name ?? user.name;
     const role = body.role ?? user.role;
+    const specialty =
+      role === 'SPECIALISTE'
+        ? body.specialty !== undefined
+          ? (body.specialty ?? null)
+          : user.specialty
+        : null;
+    if (role === 'SPECIALISTE' && !specialty) {
+      throw badRequest('Une spécialité est requise pour un spécialiste');
+    }
     const active = body.active === undefined ? user.active : body.active ? 1 : 0;
     const hash = body.password ? bcrypt.hashSync(body.password, 10) : user.password_hash;
 
-    db.prepare('UPDATE users SET name=?, role=?, active=?, password_hash=? WHERE id=?').run(
+    db.prepare('UPDATE users SET name=?, role=?, specialty=?, active=?, password_hash=? WHERE id=?').run(
       name,
       role,
+      specialty,
       active,
       hash,
       user.id,

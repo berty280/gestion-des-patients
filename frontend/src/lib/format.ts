@@ -1,4 +1,10 @@
-import type { AppointmentStatus, InvoiceStatus, PaymentMethod } from './types';
+import type {
+  AppointmentStatus,
+  ExamCategory,
+  InvoiceStatus,
+  PaymentMethod,
+  ReferralStatus,
+} from './types';
 
 /** Format an integer amount of FCFA, e.g. 12500 -> "12 500 FCFA". */
 export function fcfa(amount: number): string {
@@ -88,3 +94,21 @@ export const paymentMethodLabel: Record<PaymentMethod, string> = {
   CARTE: 'Carte',
   AUTRE: 'Autre',
 };
+
+export const referralStatusLabel: Record<ReferralStatus, string> = {
+  EN_ATTENTE: 'En attente',
+  PLANIFIE: 'Planifiée',
+  TERMINE: 'Terminée',
+  ANNULE: 'Annulée',
+};
+
+export const examCategoryLabel: Record<ExamCategory, string> = {
+  LABORATOIRE: 'Laboratoire',
+  IMAGERIE: 'Imagerie',
+};
+
+export const WEEKDAYS = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
+export function weekdayLabel(weekday: number): string {
+  return WEEKDAYS[weekday] ?? '—';
+}

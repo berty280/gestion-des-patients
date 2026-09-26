@@ -52,10 +52,26 @@ goto attendre
 
 :pret
 start "" http://localhost:3000
-echo Clinique est demarre. Vous pouvez fermer CETTE fenetre.
-echo (La petite fenetre "Clinique (serveur)" minimisee doit rester ouverte.)
-timeout /t 4 >nul
+echo.
+echo ============================================
+echo    Clinique est demarre.
+echo.
+echo    Sur CE poste (serveur) : http://localhost:3000
+for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4"') do (
+  set "IP=%%a"
+  call :showIp
+)
+echo.
+echo    (La petite fenetre "Clinique (serveur)" minimisee
+echo     doit rester ouverte pendant l'utilisation.)
+echo ============================================
+timeout /t 8 >nul
 exit /b 0
+
+:showIp
+set "IP=%IP: =%"
+echo    Depuis les autres postes    : http://%IP%:3000
+goto :eof
 
 :tropLong
 echo [ERREUR] Le serveur met trop de temps a demarrer.

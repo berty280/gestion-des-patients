@@ -1,66 +1,80 @@
-# Clinique — Spécification (MVP)
+# Clinique — Spécification
 
-Gestion des patients d'un centre de santé. Application web locale (PWA) mono-poste,
-en français, montants en **FCFA**.
+Gestion des patients d'un centre de santé (Yaoundé). Application web **multi-postes**
+(un poste serveur, les autres via le réseau local), en français, montants en **FCFA**.
 
 ## 1. Objectifs
-Permettre à un petit centre de santé de :
-1. Tenir le **dossier** de chaque patient (identité, contact, groupe sanguin,
-   allergies, antécédents).
-2. Enregistrer les **consultations** (motif, symptômes, signes vitaux, diagnostic,
-   traitement) et consulter l'historique médical.
-3. Gérer la **file d'attente** du jour et les **rendez-vous**.
-4. **Facturer** les actes et médicaments, et suivre les **paiements**.
+1. **Dossier patient** unique, identifiable par **nom + date de naissance** ou par
+   **téléphone** (détection des doublons à la saisie).
+2. **Consultations générales** (plusieurs médecins généralistes) : signes vitaux
+   (température, poids, taille, tension), symptômes, pathologies (CIM-10), prescription
+   de médicaments, prescription d'examens (labo / imagerie), résumé de fin de séance.
+3. **Référence** vers un spécialiste du centre, avec prise de **rendez-vous** selon le
+   **calendrier de prestation** du spécialiste, et transmission des indications.
+4. **Consultations spécialisées** (kiné, ophtalmo, dermato, gynéco, radiologue) : chaque
+   spécialiste a sa **session**, sa **file de références**, son **catalogue de pathologies
+   CIM-10** propre, et enregistre ses actes/thérapies, constatations, interprétation
+   (radiologue), prescriptions.
+5. **Dossier numérique unifié** regroupant toutes les consultations (générales +
+   spécialisées), les médicaments et examens prescrits, les références.
 
 ## 2. Rôles & permissions
-Hiérarchie `ACCUEIL < SOIGNANT < ADMIN`.
+Rangs : `ACCUEIL` (1) < `GENERALISTE` (2) = `SPECIALISTE` (2) < `ADMIN` (3).
 
-| Fonction                                   | Accueil | Soignant | Admin |
-|--------------------------------------------|:------:|:--------:|:-----:|
-| Créer / éditer un patient                  |   ✔    |    ✔     |   ✔   |
-| File d'attente & rendez-vous               |   ✔    |    ✔     |   ✔   |
-| Facturation & encaissements                |   ✔    |    ✔     |   ✔   |
-| Consultations (lecture / création)         |        |    ✔     |   ✔   |
-| Supprimer un patient / une facture         |        |          |   ✔   |
-| Utilisateurs                               |        |          |   ✔   |
-| Rapports d'activité détaillés              |        |          |   ✔   |
+| Fonction                                        | Accueil | Généraliste | Spécialiste | Admin |
+|-------------------------------------------------|:------:|:-----------:|:-----------:|:-----:|
+| Créer / éditer un patient, file d'attente       |   ✔    |     ✔       |     ✔       |   ✔   |
+| Facturation & encaissements                     |   ✔    |             |             |   ✔   |
+| Dossier médical & consultations (lecture)       |        |     ✔       |     ✔       |   ✔   |
+| Consultation générale                           |        |     ✔       |             |   ✔   |
+| Consultation spécialisée (sa spécialité)        |        |             |     ✔       |   ✔   |
+| Référer à un spécialiste                        |        |     ✔       |             |   ✔   |
+| Catalogue pathologies (lecture)                 |        |     ✔       |     ✔       |   ✔   |
+| Son propre calendrier                           |        |             |     ✔       |   ✔   |
+| Catalogue (écriture), calendriers de tous,      |        |             |             |   ✔   |
+| utilisateurs, rapports, suppression             |        |             |             |   ✔   |
 
-Le tableau de bord (indicateurs du jour) est accessible à tous les rôles.
+Le tableau de bord est accessible à tous (indicateurs adaptés au rôle).
+Confidentialité médicale : le contenu clinique n'est visible que du personnel médical.
 
-> **Confidentialité médicale** : le contenu des consultations (diagnostic,
-> traitement) n'est visible que des rôles Soignant et Admin.
+## 3. Spécialités & pathologies
+Spécialités : `KINE`, `OPHTALMOLOGIE`, `DERMATOLOGIE`, `GYNECOLOGIE`, `RADIOLOGIE`.
+Chaque spécialité (et la médecine générale) dispose d'un **catalogue de pathologies**
+avec **code CIM-10** et libellé français (`backend/src/db/pathologies.data.ts`).
+Jeu de départ curé et **extensible par l'admin** (≈ 15–20 par spécialité) ; ce n'est
+pas la base OMS exhaustive.
 
-## 3. Modèle de données
-Tables : `users`, `patients`, `consultations`, `appointments`, `invoices`,
-`invoice_items`, `payments` (+ `_migrations`). Voir
-`backend/src/db/migrations/001_init.sql`.
+## 4. Modèle de données
+Voir `backend/src/db/migrations/001_init.sql`. Tables principales :
+- `users` (rôle + `specialty`), `patients` (`code` `P-00001`).
+- `pathologies` (`specialty` | `GENERAL`, `code` CIM-10, `label`).
+- `consultations` (`type` `GENERALE|SPECIALISTE`, `specialty`, `referral_id`, signes
+  vitaux, `findings`, `procedures`, `diagnosis`, `summary`, `notes`), avec
+  `consultation_pathologies`, `prescriptions`, `exam_orders` (`LABORATOIRE|IMAGERIE`).
+- `referrals` (patient, `from_user_id`, `to_specialty`, `to_user_id?`, `appointment_id?`,
+  `indications`, statut `EN_ATTENTE|PLANIFIE|TERMINE|ANNULE`).
+- `specialist_schedules` (`weekday` 0–6, horaires).
+- `appointments` (`assigned_user_id?`, `specialty?`, `referral_id?`, statut).
+- `invoices` / `invoice_items` / `payments` (FCFA ; statut dérivé).
 
-- **patients** : identité, sexe (`M|F`), date de naissance, téléphone, adresse,
-  groupe sanguin, allergies, contact d'urgence, antécédents. `code` lisible `P-00001`.
-- **consultations** : rattachées à un patient et à l'utilisateur soignant ;
-  signes vitaux (poids, taille, température, tension systolique/diastolique, pouls),
-  motif, symptômes, diagnostic, traitement, notes. Journal append-only par patient.
-- **appointments** : `scheduled_at` (date+heure), `reason`, `status`
-  (`PLANIFIE → EN_ATTENTE → EN_COURS → TERMINE`, ou `ANNULE`). La file d'attente est
-  simplement l'ensemble des rendez-vous du jour triés par heure.
-- **invoices / invoice_items / payments** : une facture porte des lignes
-  (libellé, quantité, prix unitaire en FCFA) et des paiements
-  (montant, mode `ESPECES|MOBILE_MONEY|CARTE|AUTRE`). Le **total** et le **statut**
-  (`IMPAYEE|PARTIELLE|PAYEE`) sont **dérivés** (jamais stockés). Un paiement ne peut
-  pas dépasser le reste à payer.
+## 5. API (préfixe `/api`)
+- Auth : `POST /auth/login`, `GET /auth/me`.
+- Patients : `GET/POST /patients`, `GET /patients/identify`, `GET/PATCH /patients/:id`,
+  `GET /patients/:id/record` (dossier complet, médical), `DELETE /patients/:id` (admin).
+- Consultations : `GET/POST /consultations`, `GET /consultations/:id` (médical).
+- Références : `GET/POST /referrals`, `PATCH /referrals/:id` (`?mine=1` pour le spécialiste).
+- Rendez-vous : `GET/POST /appointments`, `PATCH/DELETE /appointments/:id`
+  (`?scope=general|mine`, `?date=`, `?assigned_user_id=`).
+- Pathologies : `GET /pathologies` (médical), `POST/PATCH/DELETE` (admin).
+- Spécialités : `GET /specialties`, `GET /specialists?specialty=`.
+- Calendriers : `GET /schedules`, `POST /schedules`, `DELETE /schedules/:id`.
+- Facturation : `GET/POST /invoices`, `GET /invoices/:id`, `POST /invoices/:id/payments`,
+  `DELETE /invoices/:id` (admin).
+- Utilisateurs : `GET/POST/PATCH /users` (admin).
+- Rapports : `GET /reports/dashboard` (tous), `GET /reports/activity?date=` (admin).
 
-## 4. API (préfixe `/api`)
-- `POST /auth/login`, `GET /auth/me`
-- `GET/POST /patients`, `GET/PATCH /patients/:id`, `DELETE /patients/:id` (admin)
-- `GET/POST /consultations`, `GET/PATCH /consultations/:id` (soignant+)
-  — filtre `?patient_id=`
-- `GET/POST /appointments`, `PATCH/DELETE /appointments/:id` — filtres `?date=`, `?status=`
-- `GET/POST /invoices`, `GET /invoices/:id`, `POST /invoices/:id/payments`,
-  `DELETE /invoices/:id` (admin) — filtres `?status=`, `?patient_id=`
-- `GET/POST/PATCH /users` (admin)
-- `GET /reports/dashboard` (tous), `GET /reports/activity?date=` (admin)
-
-## 5. Contraintes techniques
-- Mono-port en prod locale : le backend sert l'API et la PWA sur `http://localhost:3000`.
-- SQLite (WAL + clés étrangères). Migration vers Postgres possible plus tard.
-- TypeScript strict, `npm run build` et `npm run typecheck` verts, `npm audit` propre.
+## 6. Contraintes techniques
+- Mono-port en prod locale (API + PWA sur `:3000`), écoute `0.0.0.0` pour l'accès réseau.
+- SQLite (WAL + FK). Validation du calendrier : un RDV assigné doit tomber un jour de
+  prestation du spécialiste.
+- TypeScript strict ; `npm run build`/`typecheck` verts ; `npm audit` propre.

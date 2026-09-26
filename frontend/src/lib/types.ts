@@ -1,11 +1,21 @@
-export type Role = 'ACCUEIL' | 'SOIGNANT' | 'ADMIN';
+export type Role = 'ACCUEIL' | 'GENERALISTE' | 'SPECIALISTE' | 'ADMIN';
+export type Specialty =
+  | 'KINE'
+  | 'OPHTALMOLOGIE'
+  | 'DERMATOLOGIE'
+  | 'GYNECOLOGIE'
+  | 'RADIOLOGIE';
 export type Sex = 'M' | 'F';
+export type ConsultationType = 'GENERALE' | 'SPECIALISTE';
 export type AppointmentStatus =
   | 'PLANIFIE'
   | 'EN_ATTENTE'
   | 'EN_COURS'
   | 'TERMINE'
   | 'ANNULE';
+export type ReferralStatus = 'EN_ATTENTE' | 'PLANIFIE' | 'TERMINE' | 'ANNULE';
+export type ExamCategory = 'LABORATOIRE' | 'IMAGERIE';
+export type ExamStatus = 'PRESCRIT' | 'REALISE' | 'ANNULE';
 export type PaymentMethod = 'ESPECES' | 'MOBILE_MONEY' | 'CARTE' | 'AUTRE';
 export type InvoiceStatus = 'IMPAYEE' | 'PARTIELLE' | 'PAYEE';
 
@@ -14,6 +24,7 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  specialty?: Specialty | null;
   active?: number;
   created_at?: string;
 }
@@ -39,26 +50,106 @@ export interface PatientDetail extends Patient {
   last_visit: string | null;
 }
 
+export interface Pathology {
+  id: number;
+  specialty: string;
+  code: string | null;
+  label: string;
+  created_at?: string;
+}
+
+export interface Prescription {
+  id: number;
+  consultation_id: number;
+  patient_id: number;
+  medication: string;
+  dosage: string | null;
+  frequency: string | null;
+  duration: string | null;
+  instructions: string | null;
+  created_at: string;
+}
+
+export interface ExamOrder {
+  id: number;
+  consultation_id: number;
+  patient_id: number;
+  category: ExamCategory;
+  label: string;
+  notes: string | null;
+  status: ExamStatus;
+  result: string | null;
+  created_at: string;
+}
+
 export interface Consultation {
   id: number;
   patient_id: number;
   user_id: number;
+  type: ConsultationType;
+  specialty: Specialty | null;
+  referral_id: number | null;
   motif: string | null;
   symptoms: string | null;
-  diagnosis: string | null;
-  treatment: string | null;
   weight_kg: number | null;
   height_cm: number | null;
   temperature_c: number | null;
   bp_systolic: number | null;
   bp_diastolic: number | null;
   pulse: number | null;
+  findings: string | null;
+  procedures: string | null;
+  diagnosis: string | null;
+  summary: string | null;
   notes: string | null;
   created_at: string;
   first_name?: string;
   last_name?: string;
   patient_code?: string | null;
   user_name?: string | null;
+  pathologies?: Pathology[];
+  prescriptions?: Prescription[];
+  exams?: ExamOrder[];
+}
+
+export interface Referral {
+  id: number;
+  patient_id: number;
+  from_user_id: number;
+  consultation_id: number | null;
+  to_specialty: Specialty;
+  to_user_id: number | null;
+  appointment_id: number | null;
+  indications: string | null;
+  status: ReferralStatus;
+  created_at: string;
+  first_name?: string;
+  last_name?: string;
+  patient_code?: string | null;
+  from_user_name?: string | null;
+  to_user_name?: string | null;
+  appointment_at?: string | null;
+}
+
+export interface Schedule {
+  id: number;
+  user_id: number;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+}
+
+export interface Specialist {
+  id: number;
+  name: string;
+  specialty: Specialty;
+  weekdays: number[];
+  schedules: Schedule[];
+}
+
+export interface SpecialtyOption {
+  code: Specialty;
+  label: string;
 }
 
 export interface Appointment {
@@ -68,12 +159,16 @@ export interface Appointment {
   reason: string | null;
   status: AppointmentStatus;
   user_id: number;
+  assigned_user_id: number | null;
+  specialty: Specialty | null;
+  referral_id: number | null;
   created_at: string;
   first_name: string;
   last_name: string;
   patient_code: string | null;
   patient_phone: string | null;
   user_name: string | null;
+  assigned_name: string | null;
 }
 
 export interface InvoiceItem {
@@ -115,6 +210,14 @@ export interface InvoiceDetail extends Invoice {
   payments: Payment[];
 }
 
+export interface PatientRecord {
+  patient: Patient;
+  consultations: Consultation[];
+  referrals: Referral[];
+  prescriptions: Prescription[];
+  exams: ExamOrder[];
+}
+
 export interface DashboardStats {
   patients_total: number;
   consultations_today: number;
@@ -122,6 +225,8 @@ export interface DashboardStats {
   queue_waiting: number;
   invoices_unpaid: number;
   revenue_today: number;
+  my_referrals_pending: number;
+  my_appointments_today: number;
 }
 
 export interface ActivityReport {

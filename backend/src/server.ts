@@ -12,6 +12,10 @@ import { appointmentRoutes } from './routes/appointments.js';
 import { invoiceRoutes } from './routes/invoices.js';
 import { userRoutes } from './routes/users.js';
 import { reportRoutes } from './routes/reports.js';
+import { specialtyRoutes } from './routes/specialties.js';
+import { pathologyRoutes } from './routes/pathologies.js';
+import { scheduleRoutes } from './routes/schedules.js';
+import { referralRoutes } from './routes/referrals.js';
 
 export async function buildServer(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -57,6 +61,10 @@ export async function buildServer(): Promise<FastifyInstance> {
       await api.register(invoiceRoutes);
       await api.register(userRoutes);
       await api.register(reportRoutes);
+      await api.register(specialtyRoutes);
+      await api.register(pathologyRoutes);
+      await api.register(scheduleRoutes);
+      await api.register(referralRoutes);
     },
     { prefix: '/api' },
   );

@@ -28,6 +28,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       email: user.email,
       name: user.name,
       role: user.role,
+      specialty: user.specialty ?? null,
     };
     const token = app.jwt.sign(payload, { expiresIn: '12h' });
     return { token, user: payload };

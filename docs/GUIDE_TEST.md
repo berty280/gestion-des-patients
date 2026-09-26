@@ -1,14 +1,13 @@
 # Guide d'installation & de test — Clinique
 
 ## Prérequis
-- **Node.js ≥ 20** (tester avec `node -v`). Sous Windows, installer la version LTS
-  depuis <https://nodejs.org>.
+- **Node.js ≥ 20** (`node -v`). Sous Windows : version LTS depuis <https://nodejs.org>.
 
 ## Installation (développement)
 ```bash
-npm install                 # installe backend + frontend
+npm install
 cp backend/.env.example backend/.env   # (Windows : copier le fichier à la main)
-npm run db:reset            # crée la base + comptes + données de démonstration
+npm run db:reset            # base + comptes + catalogue CIM-10 + données de démo
 ```
 
 ## Lancer en développement (2 terminaux)
@@ -16,33 +15,44 @@ npm run db:reset            # crée la base + comptes + données de démonstrati
 npm run dev:backend         # API sur http://localhost:3000
 npm run dev:frontend        # PWA sur http://localhost:5173 (proxy /api -> 3000)
 ```
-Ouvrir <http://localhost:5173>.
 
-## Lancer en local « comme en production » (un seul port)
+## Lancer « comme en production » (un seul port)
 ```bash
-npm run serve               # build + démarre tout sur http://localhost:3000
+npm run serve               # build + serveur sur http://localhost:3000
 ```
 
-## Comptes de démonstration
-Mot de passe pour tous : `clinique123`
-- `accueil@clinique.local` — rôle Accueil
-- `soignant@clinique.local` — rôle Soignant
-- `admin@clinique.local` — rôle Admin
+## Multi-postes (réseau local)
+Le serveur écoute sur toutes les interfaces (`HOST=0.0.0.0`). Depuis un autre poste du
+même réseau, ouvrir `http://ADRESSE-IP-DU-SERVEUR:3000`. Le lanceur
+`Clinique - Demarrer.bat` affiche cette adresse. Autoriser Node.js dans le pare-feu
+Windows au premier lancement.
 
-## Scénario de test rapide
-1. Se connecter en **Accueil** → **Patients** → *+ Nouveau patient* (nom, prénom,
-   date de naissance…). Le n° de dossier `P-0000x` est attribué automatiquement.
-2. **File d'attente** → *+ Rendez-vous* : choisir le patient, l'heure, cocher
-   « Placer directement en file d'attente ». Faire avancer le statut
-   (*Arrivé → En consultation → Terminer*).
-3. Se connecter en **Soignant** → ouvrir le dossier du patient → *+ Consultation* :
-   saisir signes vitaux, diagnostic, traitement. La consultation apparaît dans
-   l'historique et dans l'onglet **Consultations**.
-4. Se connecter en **Accueil** → **Facturation** → *+ Facture* : ajouter des lignes
-   (consultation, médicaments). Ouvrir la facture → *Encaisser* un paiement.
-   Le statut passe à *Partielle* puis *Payée*.
-5. Se connecter en **Admin** → **Rapports** : voir les indicateurs du jour
-   (nouveaux patients, consultations, recettes). **Utilisateurs** : créer un compte.
+## Comptes de démonstration (mot de passe `clinique123`)
+- `accueil@clinique.local` — Accueil
+- `generaliste@clinique.local`, `generaliste2@clinique.local` — Généralistes
+- `kine@`, `ophtalmo@`, `dermato@`, `gyneco@`, `radiologue@clinique.local` — Spécialistes
+- `admin@clinique.local` — Administrateur
+
+## Scénario de test complet
+1. **Accueil** → **Patients** → *+ Nouveau patient*. Vérifier l'attribution du n° de
+   dossier `P-0000x`. Rechercher un patient par nom, téléphone ou n° de dossier.
+2. **Accueil** → **File d'attente** → *+ Rendez-vous* : mettre un patient en file.
+3. **Généraliste** (`generaliste@`) → ouvrir un patient → *+ Consultation* :
+   saisir signes vitaux, ajouter une **pathologie CIM-10**, un **médicament**, un
+   **examen**, un **résumé**. Enregistrer.
+4. Toujours en généraliste → sur le patient → **Référer** : choisir *Gynécologie*, le
+   Dr Gynécologue, écrire des indications, fixer un rendez-vous. Astuce : la gynéco
+   consulte **lundi et vendredi** — un autre jour est refusé (respect du calendrier).
+5. **Gynécologue** (`gyneco@`) → **Mes références** : voir le patient référé avec les
+   indications → *Consulter* : remplir constatations, diagnostic (pathologie gynéco
+   CIM-10), traitement. À l'enregistrement, la référence passe **Terminée**.
+6. **Généraliste / Gynéco** → ouvrir le patient : le **dossier unifié** montre les deux
+   consultations (générale + gynéco), médicaments et examens prescrits, la référence.
+7. **Radiologue** (`radiologue@`) : même principe, champ *Examen / interprétation*.
+8. **Accueil** → **Facturation** → *+ Facture* → *Encaisser* un paiement (FCFA).
+9. **Admin** → **Pathologies** : ajouter une pathologie à une spécialité. **Calendriers** :
+   modifier les jours d'un spécialiste. **Utilisateurs** : créer un spécialiste (avec
+   sa spécialité). **Rapports** : indicateurs du jour.
 
 ## Vérifications développeur
 ```bash

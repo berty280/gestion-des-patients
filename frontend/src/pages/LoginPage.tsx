@@ -26,10 +26,19 @@ export function LoginPage() {
     }
   }
 
-  function quickFill(role: 'accueil' | 'soignant' | 'admin') {
-    setEmail(`${role}@clinique.local`);
+  function quickFill(account: string) {
+    setEmail(`${account}@clinique.local`);
     setPassword('clinique123');
   }
+
+  const demoAccounts: Array<{ key: string; label: string }> = [
+    { key: 'accueil', label: 'Accueil' },
+    { key: 'generaliste', label: 'Généraliste' },
+    { key: 'gyneco', label: 'Gynéco' },
+    { key: 'kine', label: 'Kiné' },
+    { key: 'radiologue', label: 'Radiologue' },
+    { key: 'admin', label: 'Admin' },
+  ];
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
@@ -65,27 +74,16 @@ export function LoginPage() {
           <div className="mt-4 border-t border-slate-100 pt-3">
             <p className="mb-2 text-xs text-slate-400">Comptes de démonstration :</p>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => quickFill('accueil')}
-                className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 hover:bg-slate-200"
-              >
-                Accueil
-              </button>
-              <button
-                type="button"
-                onClick={() => quickFill('soignant')}
-                className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 hover:bg-slate-200"
-              >
-                Soignant
-              </button>
-              <button
-                type="button"
-                onClick={() => quickFill('admin')}
-                className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 hover:bg-slate-200"
-              >
-                Admin
-              </button>
+              {demoAccounts.map((a) => (
+                <button
+                  key={a.key}
+                  type="button"
+                  onClick={() => quickFill(a.key)}
+                  className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 hover:bg-slate-200"
+                >
+                  {a.label}
+                </button>
+              ))}
             </div>
           </div>
         </Card>

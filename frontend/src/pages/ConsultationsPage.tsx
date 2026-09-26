@@ -88,6 +88,7 @@ export function ConsultationsPage() {
         <ConsultationFormModal
           patientId={target.id}
           patientName={`${target.first_name} ${target.last_name}`}
+          type="GENERALE"
           onClose={() => setTarget(null)}
           onSaved={() => {
             setTarget(null);

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useFetch } from '../lib/useFetch';
 import { useAuth } from '../auth/AuthContext';
-import { roleAtLeast } from '../lib/roles';
+import { isMedecin } from '../lib/roles';
 import { fcfa } from '../lib/format';
 import type { DashboardStats } from '../lib/types';
 import { Card, PageTitle, Spinner } from '../components/ui';
@@ -42,6 +42,9 @@ function Stat({
 export function DashboardPage() {
   const { user } = useAuth();
   const { data, loading } = useFetch<DashboardStats>('/reports/dashboard');
+  const isSpecialist = user?.role === 'SPECIALISTE';
+  const isAccueil = user?.role === 'ACCUEIL';
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <div className="space-y-4">
@@ -51,50 +54,70 @@ export function DashboardPage() {
         <Spinner label="Chargement…" />
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {isSpecialist && (
+            <>
+              <Stat
+                label="Références en attente"
+                value={data.my_referrals_pending}
+                to="/references"
+                tone="amber"
+              />
+              <Stat label="Mes RDV aujourd'hui" value={data.my_appointments_today} to="/agenda" tone="blue" />
+            </>
+          )}
           <Stat label="Patients enregistrés" value={data.patients_total} to="/patients" tone="blue" />
-          <Stat label="En file d'attente" value={data.queue_waiting} to="/file" tone="amber" />
-          <Stat label="Rendez-vous aujourd'hui" value={data.appointments_today} to="/file" />
-          <Stat
-            label="Consultations aujourd'hui"
-            value={data.consultations_today}
-            to={roleAtLeast(user?.role, 'SOIGNANT') ? '/consultations' : undefined}
-          />
-          <Stat
-            label="Factures impayées"
-            value={data.invoices_unpaid}
-            to="/facturation"
-            tone="rose"
-          />
-          <Stat
-            label="Recettes du jour"
-            value={fcfa(data.revenue_today)}
-            to="/facturation"
-            tone="emerald"
-          />
+          {!isSpecialist && (
+            <Stat label="En file d'attente" value={data.queue_waiting} to="/file" tone="amber" />
+          )}
+          <Stat label="Consultations aujourd'hui" value={data.consultations_today} />
+          {(isAccueil || isAdmin) && (
+            <>
+              <Stat label="Factures impayées" value={data.invoices_unpaid} to="/facturation" tone="rose" />
+              <Stat
+                label="Recettes du jour"
+                value={fcfa(data.revenue_today)}
+                to="/facturation"
+                tone="emerald"
+              />
+            </>
+          )}
         </div>
       )}
 
       <Card>
         <h2 className="mb-2 text-sm font-semibold text-slate-700">Accès rapides</h2>
         <div className="flex flex-wrap gap-2">
-          <Link
-            to="/patients"
-            className="rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700 hover:bg-blue-100"
-          >
-            + Nouveau patient
+          <Link to="/patients" className="rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700 hover:bg-blue-100">
+            Rechercher / créer un patient
           </Link>
-          <Link
-            to="/file"
-            className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 hover:bg-amber-100"
-          >
-            File d'attente du jour
-          </Link>
-          <Link
-            to="/facturation"
-            className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-100"
-          >
-            Facturation
-          </Link>
+          {isSpecialist ? (
+            <>
+              <Link to="/references" className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 hover:bg-amber-100">
+                Mes références
+              </Link>
+              <Link to="/catalogue" className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 hover:bg-slate-200">
+                Mes pathologies (CIM-10)
+              </Link>
+            </>
+          ) : isMedecin(user?.role) ? (
+            <>
+              <Link to="/consultations" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-100">
+                Consultations
+              </Link>
+              <Link to="/file" className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 hover:bg-amber-100">
+                File d'attente
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link to="/file" className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700 hover:bg-amber-100">
+                File d'attente
+              </Link>
+              <Link to="/facturation" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 hover:bg-emerald-100">
+                Facturation
+              </Link>
+            </>
+          )}
         </div>
       </Card>
     </div>

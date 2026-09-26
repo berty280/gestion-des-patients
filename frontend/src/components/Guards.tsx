@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
-import { roleAtLeast } from '../lib/roles';
+import { isMedecin, roleAtLeast } from '../lib/roles';
 import type { Role } from '../lib/types';
 import { Spinner } from './ui';
 
@@ -25,6 +25,22 @@ export function RequireAuth({ children }: { children: ReactNode }) {
 export function RequireRole({ min, children }: { min: Role; children: ReactNode }) {
   const { user } = useAuth();
   if (!roleAtLeast(user?.role, min)) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
+export function RequireMedecin({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  if (!isMedecin(user?.role)) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
+export function RequireAnyRole({ roles, children }: { roles: Role[]; children: ReactNode }) {
+  const { user } = useAuth();
+  if (!user || !roles.includes(user.role)) {
     return <Navigate to="/" replace />;
   }
   return <>{children}</>;

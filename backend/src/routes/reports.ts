@@ -10,7 +10,7 @@ function today(): string {
 
 export async function reportRoutes(app: FastifyInstance): Promise<void> {
   // Indicateurs du tableau de bord — tous les rôles.
-  app.get('/reports/dashboard', { preHandler: [app.authenticate] }, async () => {
+  app.get('/reports/dashboard', { preHandler: [app.authenticate] }, async (req) => {
     const db = getDb();
     const day = today();
     const one = (sql: string, ...args: unknown[]) =>
@@ -40,6 +40,24 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
         .get(day) as { n: number }
     ).n;
 
+    // Indicateurs spécifiques au spécialiste connecté.
+    let my_referrals_pending = 0;
+    let my_appointments_today = 0;
+    if (req.user.role === 'SPECIALISTE') {
+      my_referrals_pending = one(
+        `SELECT COUNT(*) AS n FROM referrals
+         WHERE status IN ('EN_ATTENTE','PLANIFIE')
+           AND (to_user_id = ? OR (to_user_id IS NULL AND to_specialty = ?))`,
+        req.user.id,
+        req.user.specialty,
+      );
+      my_appointments_today = one(
+        'SELECT COUNT(*) AS n FROM appointments WHERE assigned_user_id = ? AND substr(scheduled_at,1,10) = ?',
+        req.user.id,
+        day,
+      );
+    }
+
     return {
       patients_total,
       consultations_today,
@@ -47,6 +65,8 @@ export async function reportRoutes(app: FastifyInstance): Promise<void> {
       queue_waiting,
       invoices_unpaid,
       revenue_today,
+      my_referrals_pending,
+      my_appointments_today,
     };
   });
 

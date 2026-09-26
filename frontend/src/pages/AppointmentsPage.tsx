@@ -23,16 +23,18 @@ const NEXT: Partial<Record<AppointmentStatus, { to: AppointmentStatus; label: st
   EN_COURS: { to: 'TERMINE', label: 'Terminer' },
 };
 
-export function AppointmentsPage() {
+export function AppointmentsPage({ mode = 'general' }: { mode?: 'general' | 'specialist' }) {
   const toast = useToast();
   const [date, setDate] = useState(todayIso());
   const [rows, setRows] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const isSpecialist = mode === 'specialist';
 
   function load() {
     setLoading(true);
-    api<Appointment[]>(`/appointments?date=${date}`)
+    const scope = isSpecialist ? 'mine' : 'general';
+    api<Appointment[]>(`/appointments?date=${date}&scope=${scope}`)
       .then(setRows)
       .catch((e) => toast.error(e instanceof ApiError ? e.message : 'Erreur'))
       .finally(() => setLoading(false));
@@ -66,8 +68,11 @@ export function AppointmentsPage() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <PageTitle title="File d'attente & rendez-vous" />
-        <Button onClick={() => setCreating(true)}>+ Rendez-vous</Button>
+        <PageTitle
+          title={isSpecialist ? 'Mon agenda' : "File d'attente & rendez-vous"}
+          subtitle={isSpecialist ? 'Rendez-vous qui me sont assignés' : undefined}
+        />
+        {!isSpecialist && <Button onClick={() => setCreating(true)}>+ Rendez-vous</Button>}
       </div>
 
       <div className="flex items-center gap-2">

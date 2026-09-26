@@ -44,6 +44,29 @@ export async function patientRoutes(app: FastifyInstance): Promise<void> {
     return db.prepare('SELECT * FROM patients ORDER BY created_at DESC LIMIT 200').all();
   });
 
+  // Identification d'un patient par (nom + date de naissance) ou par téléphone.
+  app.get('/patients/identify', { preHandler: [app.authenticate] }, async (req) => {
+    const { last_name, birth_date, phone } = req.query as {
+      last_name?: string;
+      birth_date?: string;
+      phone?: string;
+    };
+    const db = getDb();
+    if (phone && phone.trim()) {
+      return db
+        .prepare('SELECT * FROM patients WHERE phone = ? ORDER BY last_name, first_name LIMIT 50')
+        .all(phone.trim());
+    }
+    if (last_name && last_name.trim() && birth_date && /^\d{4}-\d{2}-\d{2}$/.test(birth_date)) {
+      return db
+        .prepare(
+          'SELECT * FROM patients WHERE lower(last_name) = lower(?) AND birth_date = ? ORDER BY first_name LIMIT 50',
+        )
+        .all(last_name.trim(), birth_date);
+    }
+    return [];
+  });
+
   app.get('/patients/:id', { preHandler: [app.authenticate] }, async (req) => {
     const { id } = req.params as { id: string };
     const db = getDb();
@@ -63,6 +86,63 @@ export async function patientRoutes(app: FastifyInstance): Promise<void> {
 
     return { ...row, consultations_count: consultations, last_visit: lastVisit.d };
   });
+
+  // Dossier numérique complet (médical) — réservé au personnel médical.
+  app.get(
+    '/patients/:id/record',
+    { preHandler: [app.authenticate, app.requireMedecin] },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const db = getDb();
+      const pid = Number(id);
+      const patient = db.prepare('SELECT * FROM patients WHERE id = ?').get(pid) as
+        | PatientRow
+        | undefined;
+      if (!patient) throw notFound('Patient introuvable');
+
+      const consultations = db
+        .prepare(
+          `SELECT c.*, u.name AS user_name
+           FROM consultations c LEFT JOIN users u ON u.id = c.user_id
+           WHERE c.patient_id = ? ORDER BY c.created_at DESC`,
+        )
+        .all(pid) as Array<{ id: number }>;
+
+      // Rattache pathologies / prescriptions / examens à chaque consultation.
+      const pathoStmt = db.prepare(
+        `SELECT pa.* FROM consultation_pathologies cp
+         JOIN pathologies pa ON pa.id = cp.pathology_id
+         WHERE cp.consultation_id = ? ORDER BY pa.code`,
+      );
+      const presStmt = db.prepare('SELECT * FROM prescriptions WHERE consultation_id = ? ORDER BY id');
+      const examStmt = db.prepare('SELECT * FROM exam_orders WHERE consultation_id = ? ORDER BY id');
+      const fullConsultations = consultations.map((c) => ({
+        ...c,
+        pathologies: pathoStmt.all(c.id),
+        prescriptions: presStmt.all(c.id),
+        exams: examStmt.all(c.id),
+      }));
+
+      const referrals = db
+        .prepare(
+          `SELECT r.*, fu.name AS from_user_name, tu.name AS to_user_name, a.scheduled_at AS appointment_at
+           FROM referrals r
+           LEFT JOIN users fu ON fu.id = r.from_user_id
+           LEFT JOIN users tu ON tu.id = r.to_user_id
+           LEFT JOIN appointments a ON a.id = r.appointment_id
+           WHERE r.patient_id = ? ORDER BY r.created_at DESC`,
+        )
+        .all(pid);
+      const prescriptions = db
+        .prepare('SELECT * FROM prescriptions WHERE patient_id = ? ORDER BY created_at DESC')
+        .all(pid);
+      const exams = db
+        .prepare('SELECT * FROM exam_orders WHERE patient_id = ? ORDER BY created_at DESC')
+        .all(pid);
+
+      return { patient, consultations: fullConsultations, referrals, prescriptions, exams };
+    },
+  );
 
   app.post('/patients', { preHandler: [app.authenticate] }, async (req, reply) => {
     const body = parse(patientBody, req.body);

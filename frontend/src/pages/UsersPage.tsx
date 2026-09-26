@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../lib/api';
-import { roleLabel } from '../lib/roles';
-import type { Role, User } from '../lib/types';
+import { roleLabel, SPECIALTIES, specialtyLabel } from '../lib/roles';
+import type { Role, Specialty, User } from '../lib/types';
 import { useToast } from '../components/Toast';
 import { Badge, Button, Card, EmptyState, Field, PageTitle, Select, Spinner } from '../components/ui';
 import { Modal } from '../components/Modal';
@@ -11,6 +11,7 @@ interface EditState {
   name: string;
   email: string;
   role: Role;
+  specialty: Specialty | '';
   password: string;
   active: boolean;
 }
@@ -20,9 +21,19 @@ const emptyEdit: EditState = {
   name: '',
   email: '',
   role: 'ACCUEIL',
+  specialty: '',
   password: '',
   active: true,
 };
+
+const ROLES: Role[] = ['ACCUEIL', 'GENERALISTE', 'SPECIALISTE', 'ADMIN'];
+
+function roleTone(role: Role): 'blue' | 'sky' | 'slate' | 'emerald' {
+  if (role === 'ADMIN') return 'blue';
+  if (role === 'SPECIALISTE') return 'sky';
+  if (role === 'GENERALISTE') return 'emerald';
+  return 'slate';
+}
 
 export function UsersPage() {
   const toast = useToast();
@@ -47,16 +58,22 @@ export function UsersPage() {
       toast.error('Nom et email requis.');
       return;
     }
+    if (edit.role === 'SPECIALISTE' && !edit.specialty) {
+      toast.error('Choisissez une spécialité.');
+      return;
+    }
     if (!edit.id && edit.password.length < 6) {
       toast.error('Mot de passe : 6 caractères minimum.');
       return;
     }
     setBusy(true);
     try {
+      const specialty = edit.role === 'SPECIALISTE' ? edit.specialty : null;
       if (edit.id) {
         const body: Record<string, unknown> = {
           name: edit.name.trim(),
           role: edit.role,
+          specialty,
           active: edit.active,
         };
         if (edit.password) body.password = edit.password;
@@ -68,6 +85,7 @@ export function UsersPage() {
             name: edit.name.trim(),
             email: edit.email.trim().toLowerCase(),
             role: edit.role,
+            specialty,
             password: edit.password,
           },
         });
@@ -99,14 +117,12 @@ export function UsersPage() {
                 <div className="flex-1">
                   <div className="font-medium text-slate-800">
                     {u.name}
-                    {u.active === 0 && (
-                      <span className="ml-2 text-xs text-rose-500">(désactivé)</span>
-                    )}
+                    {u.active === 0 && <span className="ml-2 text-xs text-rose-500">(désactivé)</span>}
                   </div>
                   <div className="text-xs text-slate-500">{u.email}</div>
                 </div>
-                <Badge tone={u.role === 'ADMIN' ? 'blue' : u.role === 'SOIGNANT' ? 'sky' : 'slate'}>
-                  {roleLabel[u.role]}
+                <Badge tone={roleTone(u.role)}>
+                  {u.role === 'SPECIALISTE' && u.specialty ? specialtyLabel[u.specialty] : roleLabel[u.role]}
                 </Badge>
                 <button
                   onClick={() =>
@@ -115,6 +131,7 @@ export function UsersPage() {
                       name: u.name,
                       email: u.email,
                       role: u.role,
+                      specialty: u.specialty ?? '',
                       password: '',
                       active: u.active !== 0,
                     })
@@ -131,10 +148,7 @@ export function UsersPage() {
       )}
 
       {edit && (
-        <Modal
-          title={edit.id ? "Modifier l'utilisateur" : 'Nouvel utilisateur'}
-          onClose={() => setEdit(null)}
-        >
+        <Modal title={edit.id ? "Modifier l'utilisateur" : 'Nouvel utilisateur'} onClose={() => setEdit(null)}>
           <div className="space-y-3">
             <Field label="Nom" value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
             <Field
@@ -149,10 +163,26 @@ export function UsersPage() {
               value={edit.role}
               onChange={(e) => setEdit({ ...edit, role: e.target.value as Role })}
             >
-              <option value="ACCUEIL">Accueil</option>
-              <option value="SOIGNANT">Soignant</option>
-              <option value="ADMIN">Administrateur</option>
+              {ROLES.map((r) => (
+                <option key={r} value={r}>
+                  {roleLabel[r]}
+                </option>
+              ))}
             </Select>
+            {edit.role === 'SPECIALISTE' && (
+              <Select
+                label="Spécialité"
+                value={edit.specialty}
+                onChange={(e) => setEdit({ ...edit, specialty: e.target.value as Specialty })}
+              >
+                <option value="">— Choisir —</option>
+                {SPECIALTIES.map((s) => (
+                  <option key={s} value={s}>
+                    {specialtyLabel[s]}
+                  </option>
+                ))}
+              </Select>
+            )}
             <Field
               label={edit.id ? 'Nouveau mot de passe (laisser vide pour ne pas changer)' : 'Mot de passe'}
               type="password"
